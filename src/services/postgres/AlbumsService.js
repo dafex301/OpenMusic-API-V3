@@ -83,6 +83,48 @@ class AlbumsService {
 
     return result.rows;
   }
+
+  async setLikeAlbum(albumid, userid) {
+    const getLikeQuery = {
+      text: 'SELECT * FROM user_album_likes WHERE albumid = $1 AND userid = $2',
+      values: [albumid, userid],
+    };
+    const getLikeResult = await this._pool.query(getLikeQuery);
+
+    if (!getLikeResult.rowCount) {
+      const id = `likes-${nanoid(16)}`;
+      const insertLikeQuery = {
+        text: 'INSERT INTO user_album_likes (id, userid, albumid) VALUES ($1, $2, $3)',
+        values: [id, userid, albumid],
+      };
+      const insertLikeResult = await this._pool.query(insertLikeQuery);
+
+      if (!insertLikeResult.rowCount) {
+        throw new InvariantError('Like gagal ditambahkan');
+      }
+    } else {
+      // dislike the album
+      const deleteLikeQuery = {
+        text: 'DELETE FROM user_album_likes WHERE albumid = $1 AND userid = $2',
+        values: [albumid, userid],
+      };
+      const deleteLikeResult = await this._pool.query(deleteLikeQuery);
+
+      if (!deleteLikeResult.rowCount) {
+        throw new InvariantError('Like gagal dihapus');
+      }
+    }
+  }
+
+  async getLikeAlbum(albumid) {
+    const query = {
+      text: 'SELECT userid FROM user_album_likes WHERE albumid = $1',
+      values: [albumid],
+    };
+    const result = await this._pool.query(query);
+
+    return result.rows;
+  }
 }
 
 module.exports = AlbumsService;

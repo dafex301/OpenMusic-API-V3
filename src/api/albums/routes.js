@@ -24,7 +24,7 @@ const routes = (handler) => [
     path: '/albums/{id}',
     handler: handler.deleteAlbumByIdHandler,
   },
-
+  // Album Cover
   {
     method: 'POST',
     path: '/albums/{id}/covers',
@@ -36,6 +36,21 @@ const routes = (handler) => [
         output: 'stream',
       },
     },
+  },
+  // Album likes / dislikes
+  {
+    method: 'POST',
+    path: '/albums/{id}/likes',
+    handler: handler.postAlbumLikeHandler,
+    options: {
+      auth: 'openmusic_jwt',
+    },
+  },
+  // Get album likes
+  {
+    method: 'GET',
+    path: '/albums/{id}/likes',
+    handler: handler.getAlbumLikeHandler,
   },
 ];
 
