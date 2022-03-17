@@ -186,7 +186,6 @@ class AlbumsHandler {
   // Album Cover Handler
   async postAlbumCoverHandler(request, h) {
     try {
-      console.log('test');
       const { data } = request.payload;
       this._uploadValidator.validateImageHeaders(data.hapi.headers);
 
@@ -199,6 +198,7 @@ class AlbumsHandler {
         },
       });
       response.code(201);
+
       return response;
     } catch (error) {
       if (error instanceof ClientError) {
@@ -260,7 +260,7 @@ class AlbumsHandler {
   async getAlbumLikeHandler(request, h) {
     try {
       const { id } = request.params;
-      const likes = await this._service.getLikeAlbum(id);
+      const { likes, check } = await this._service.getLikeAlbum(id);
       const response = h.response({
         status: 'success',
         data: {
@@ -268,6 +268,10 @@ class AlbumsHandler {
         },
       });
       response.code(200);
+
+      // Jika menerima dari cache maka header dicustom
+      if (check) response.header('X-Data-Source', 'cache');
+
       return response;
     } catch (error) {
       if (error instanceof ClientError) {

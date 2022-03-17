@@ -4,8 +4,9 @@ const InvariantError = require('../../exceptions/InvariantError');
 const NotFoundError = require('../../exceptions/NotFoundError');
 
 class AlbumsService {
-  constructor() {
+  constructor(cacheService) {
     this._pool = new Pool();
+    this._cacheService = cacheService;
   }
 
   async addAlbum({ name, year }) {
@@ -114,16 +115,29 @@ class AlbumsService {
         throw new InvariantError('Like gagal dihapus');
       }
     }
+    await this._cacheService.delete(`likes:${albumid}`);
   }
 
   async getLikeAlbum(albumid) {
-    const query = {
-      text: 'SELECT userid FROM user_album_likes WHERE albumid = $1',
-      values: [albumid],
-    };
-    const result = await this._pool.query(query);
+    try {
+      // get from cache
+      const result = await this._cacheService.get(`likes:${albumid}`);
+      return { likes: JSON.parse(result), check: 1 };
+    } catch (error) {
+      // if cache doesn't exist
+      const query = {
+        text: 'SELECT userid FROM user_album_likes WHERE albumid = $1',
+        values: [albumid],
+      };
+      const result = await this._pool.query(query);
 
-    return result.rows;
+      // save to cache
+      await this._cacheService.set(
+        `likes:${albumid}`,
+        JSON.stringify(result.rows),
+      );
+      return { likes: result.rows };
+    }
   }
 }
 
