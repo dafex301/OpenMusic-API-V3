@@ -186,7 +186,7 @@ class AlbumsHandler {
   // Album Cover Handler
   async postAlbumCoverHandler(request, h) {
     try {
-      console.log('hello');
+      console.log('test');
       const { data } = request.payload;
       this._uploadValidator.validateImageHeaders(data.hapi.headers);
 
