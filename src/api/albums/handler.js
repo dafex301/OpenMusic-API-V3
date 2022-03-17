@@ -1,15 +1,18 @@
 const ClientError = require('../../exceptions/ClientError');
 
 class AlbumsHandler {
-  constructor(service, validator) {
+  constructor(service, validator, storageService, uploadValidator) {
     this._service = service;
     this._validator = validator;
+    this._storageService = storageService;
+    this._uploadValidator = uploadValidator;
 
     this.postAlbumHandler = this.postAlbumHandler.bind(this);
     this.getAlbumsHandler = this.getAlbumsHandler.bind(this);
     this.getAlbumByIdHandler = this.getAlbumByIdHandler.bind(this);
     this.putAlbumByIdHandler = this.putAlbumByIdHandler.bind(this);
     this.deleteAlbumByIdHandler = this.deleteAlbumByIdHandler.bind(this);
+    this.postAlbumCoverHandler = this.postAlbumCoverHandler.bind(this);
   }
 
   async postAlbumHandler(request, h) {
@@ -76,7 +79,14 @@ class AlbumsHandler {
       const { id } = request.params;
       const album = await this._service.getAlbumById(id);
       const songs = await this._service.getSongsByAlbumId(id);
+
+      // change key
+      album['coverUrl'] = album['coverurl'];
+      delete album['coverurl'];
+
+      // get songs list
       album['songs'] = songs;
+
       const response = h.response({
         status: 'success',
         message: 'Berhasil mengambil album',
@@ -149,6 +159,42 @@ class AlbumsHandler {
         message: 'Berhasil menghapus album',
       });
       response.code(200);
+      return response;
+    } catch (error) {
+      if (error instanceof ClientError) {
+        const response = h.response({
+          status: 'fail',
+          message: error.message,
+        });
+        response.code(error.statusCode);
+        return response;
+      }
+
+      // Server Error
+      const response = h.response({
+        status: 'error',
+        message: 'Terjadi kesalahan pada server',
+      });
+      response.code(500);
+      console.error(error);
+      return response;
+    }
+  }
+
+  async postAlbumCoverHandler(request, h) {
+    try {
+      const { data } = request.payload;
+      this._uploadValidator.validateImageHeaders(data.hapi.headers);
+
+      const filename = await this._storageService.writeFile(data, data.hapi);
+
+      const response = h.response({
+        status: 'success',
+        data: {
+          fileLocation: `http://${process.env.HOST}:${process.env.PORT}/upload/images/${filename}`,
+        },
+      });
+      response.code(201);
       return response;
     } catch (error) {
       if (error instanceof ClientError) {
