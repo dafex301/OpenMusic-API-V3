@@ -101,7 +101,7 @@ class SongsHandler {
   async getSongByIdHandler(request, h) {
     try {
       const { id } = request.params;
-      const song = await this._service.getSongById(id);
+      const { song, isCache } = await this._service.getSongById(id);
       const response = h.response({
         status: 'success',
         message: 'Berhasil mengambil lagu',
@@ -110,6 +110,7 @@ class SongsHandler {
         },
       });
       response.code(200);
+      if (isCache) response.header('X-Data-Source', 'cache');
       return response;
     } catch (error) {
       if (error instanceof ClientError) {

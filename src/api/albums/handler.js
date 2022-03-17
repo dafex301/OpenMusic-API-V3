@@ -54,7 +54,7 @@ class AlbumsHandler {
 
   async getAlbumsHandler(request, h) {
     try {
-      const albums = await this._service.getAlbums();
+      const { albums, isCache } = await this._service.getAlbums();
       const response = h.response({
         status: 'success',
         message: 'Berhasil mengambil daftar album',
@@ -62,6 +62,7 @@ class AlbumsHandler {
           albums,
         },
       });
+      if (isCache) response.header('X-Data-Source', 'cache');
       response.code(200);
       return response;
     } catch (error) {
@@ -79,8 +80,11 @@ class AlbumsHandler {
   async getAlbumByIdHandler(request, h) {
     try {
       const { id } = request.params;
-      const album = await this._service.getAlbumById(id);
-      const songs = await this._service.getSongsByAlbumId(id);
+      const { album, isCache: isCacheAlbum } = await this._service.getAlbumById(
+        id,
+      );
+      const { songs, isCache: isCacheSong } =
+        await this._service.getSongsByAlbumId(id);
 
       // change key
       album['coverUrl'] = album['coverurl'];
@@ -97,6 +101,11 @@ class AlbumsHandler {
         },
       });
       response.code(200);
+
+      // Jika menerima dari cache maka header dicustom
+      if (isCacheAlbum || isCacheSong)
+        response.header('X-Data-Source', 'cache');
+
       return response;
     } catch (error) {
       if (error instanceof ClientError) {
@@ -260,7 +269,7 @@ class AlbumsHandler {
   async getAlbumLikeHandler(request, h) {
     try {
       const { id } = request.params;
-      const { likes, check } = await this._service.getLikeAlbum(id);
+      const { likes, isCache } = await this._service.getLikeAlbum(id);
       const response = h.response({
         status: 'success',
         data: {
@@ -270,7 +279,7 @@ class AlbumsHandler {
       response.code(200);
 
       // Jika menerima dari cache maka header dicustom
-      if (check) response.header('X-Data-Source', 'cache');
+      if (isCache) response.header('X-Data-Source', 'cache');
 
       return response;
     } catch (error) {
