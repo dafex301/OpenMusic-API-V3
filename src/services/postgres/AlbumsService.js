@@ -117,6 +117,20 @@ class AlbumsService {
     }
   }
 
+  async insertAlbumCover(albumid, coverurl) {
+    const query = {
+      text: 'UPDATE albums SET coverurl = $1 WHERE id = $2',
+      values: [coverurl, albumid],
+    };
+    const result = await this._pool.query(query);
+
+    if (!result.rowCount) {
+      throw new InvariantError('Cover gagal ditambahkan');
+    }
+
+    await this._cacheService.delete(`album:${albumid}`);
+  }
+
   async setLikeAlbum(albumid, userid) {
     const getLikeQuery = {
       text: 'SELECT * FROM user_album_likes WHERE albumid = $1 AND userid = $2',
