@@ -200,7 +200,7 @@ class AlbumsHandler {
 
       const filename = await this._storageService.writeFile(cover, cover.hapi);
       const { id } = request.params;
-      const path = `http://${process.env.HOST}:${process.env.PORT}/albums/file/${filename}`;
+      const path = `http://${process.env.HOST}:${process.env.PORT}/albums/images/${filename}`;
       await this._service.insertAlbumCover(id, path);
       const response = h.response({
         status: 'success',
